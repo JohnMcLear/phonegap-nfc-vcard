@@ -25,11 +25,16 @@ var app = {
             console.log("Searching for ", searchTerm);
             app.searchContacts();
         });
-        $('.contact').on("click", function(e){
+        $('body').on("click", ".contact", function(e){
             console.log("ID", e.target.id);
             var contactObj = contact.cache[e.target.id];
-            contact.buildVCard(contactObj);
-            alert("Need to set this guys stuff to write on VCARD");
+            var vcard = contact.buildVCard(contactObj);
+            if(vcard){
+              contact.vcard = vcard;
+              alert("ready to write Vcard");
+            }else{
+              alert("Failed to create VCard");
+            }
         });
         console.log("keyup bound");
 
@@ -66,16 +71,8 @@ var app = {
     },
     // On NFC Event
     nfcFound: function(nfcEvent){
-        var payload = 'BEGIN:VCARD\n' +
-            'VERSION:2.1\n' +
-            'N:Coleman;Don;;;\n' +
-            'FN:Don Coleman\n' +
-            'ORG:Chariot Solutions;\n' +
-            'URL:http://chariotsolutions.com\n' +
-            'TEL;WORK:215-358-1780\n' +
-            'EMAIL;WORK:info@chariotsolutions.com\n' +
-            'END:VCARD';
-        var record = ndef.mimeMediaRecord('text/x-vCard', nfc.stringToBytes(payload));
+        if(!contact.vcard) alert("no vcard to write yet");
+        var record = ndef.mimeMediaRecord('text/x-vCard', nfc.stringToBytes(contact.vcard));
         nfc.write([record], function () {
             console.log("Writing VCard", record);
             alert("Vcard written");
@@ -84,26 +81,43 @@ var app = {
 };
 
 contact = {};
-contact.cache = {}
+contact.cache = {}; // where we store cached contacts
+contact.vcard = ""; // where we store vcard strings
 
 contact.error = function(e){
-     console.error(e);
+    console.error(e);
 }
+
+/* Droped example data for now
+    'ORG:Chariot Solutions;\n' +
+    'URL:http://chariotsolutions.com\n' +
+    'TEL;WORK:215-358-1780\n' +
+*/
+// takes in contact card from cordova and builds vcard format
 contact.buildVCard = function(contact){
-    // takes in contact card from cordova and builds vcard format
+    console.log("Contact", contact);
+    var vcard = 'BEGIN:VCARD\n' +
+        'VERSION:2.1\n' +
+        'N:'+contact.name.familyName+';'+contact.name.givenName+';;;\n' +
+        'FN:'+contact.name.formatted+'\n' +
+        'EMAIL;WORK:'+contact.emails[0].value+'\n' +
+        'TEL;'+contact.phoneNumbers[0].value+'\n' +
+        'END:VCARD';
+    console.log("vcard", vcard);
+    return vcard;
 }
 
 contact.found = function(contacts){
     console.log(contacts);
     var i = 0;
     $.each(contacts, function(k,person){
-        if(i < 5){
-            if(!person.displayName) return;
-            if(!person.id) return;
-            console.log(person.displayName);
-            $('.results').append("<div class='contact' id='"+person.id+"'>"+person.displayName+"</div>");
-            contact.cache[person.id] = person; 
-            i++;
+        if(person.displayName && person.id){
+            if(i < 5){
+                $('.results').html("");
+                $('.results').append("<div class='contact' id='"+person.id+"'>"+person.displayName+"</div>");
+                contact.cache[person.id] = person; 
+                i++;
+            }
         }
     });
 }
