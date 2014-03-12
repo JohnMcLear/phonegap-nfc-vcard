@@ -34,6 +34,7 @@ var app = {
     // function, we must explicity call 'app.receivedEvent(...);'
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
+        app.startNFC();
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
@@ -45,5 +46,38 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         console.log('Received Event: ' + id);
+    },
+    // Start listening for NFC Events
+    startNFC: function(){
+      try{
+        nfc.addNdefListener(function (nfcEvent) {
+          app.nfcFound(nfcEvent, "ndef");
+          console.log("Attempting to bind to NFC NDEF");
+        }, function () {
+          console.log("Success. Listening for NDEF records..");
+        }, function () {
+          alert(html10n.get("writeRing.noNFC"));
+          $('#createNew, #read, #scan').attr('disabled', 'disabled');
+        });
+      }catch(e){
+        alert("NFC Failed");
+      }
+    },
+    // On NFC Event
+    nfcFound: function(nfcEvent){
+      var payload = 'BEGIN:VCARD\n' +
+        'VERSION:2.1\n' +
+        'N:Coleman;Don;;;\n' +
+        'FN:Don Coleman\n' +
+        'ORG:Chariot Solutions;\n' +
+        'URL:http://chariotsolutions.com\n' +
+        'TEL;WORK:215-358-1780\n' +
+        'EMAIL;WORK:info@chariotsolutions.com\n' +
+        'END:VCARD';
+      var record = ndef.mimeMediaRecord('text/x-vCard', nfc.stringToBytes(payload));
+      nfc.write([record], function () {
+        console.log("Writing VCard", record);
+        alert("Vcard written");
+      });
     }
 };
