@@ -19,6 +19,14 @@
 var app = {
     // Application Constructor
     initialize: function() {
+        $('.autocomplete').on("keyup", function(){
+            var searchTerm = $('.autocomplete').val();
+            if(searchTerm.length < 3) return;
+            console.log("Searching for ", searchTerm);
+            app.searchContacts();
+        });
+        console.log("keyup bound");
+
         this.bindEvents();
     },
     // Bind Event Listeners
@@ -33,51 +41,52 @@ var app = {
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicity call 'app.receivedEvent(...);'
     onDeviceReady: function() {
-        app.receivedEvent('deviceready');
         app.startNFC();
-    },
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
-
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
-
-        console.log('Received Event: ' + id);
     },
     // Start listening for NFC Events
     startNFC: function(){
-      try{
-        nfc.addNdefListener(function (nfcEvent) {
-          app.nfcFound(nfcEvent, "ndef");
-          console.log("Attempting to bind to NFC NDEF");
-        }, function () {
-          console.log("Success. Listening for NDEF records..");
-        }, function () {
-          alert(html10n.get("writeRing.noNFC"));
-          $('#createNew, #read, #scan').attr('disabled', 'disabled');
-        });
-      }catch(e){
-        alert("NFC Failed");
-      }
+        try{
+            nfc.addNdefListener(function (nfcEvent) {
+                app.nfcFound(nfcEvent, "ndef");
+                console.log("Attempting to bind to NFC NDEF");
+            }, function () {
+                console.log("Success. Listening for NDEF records..");
+            }, function () {
+               alert("Nope");
+            });
+        }catch(e){
+            alert("NFC Failed");
+        }
     },
     // On NFC Event
     nfcFound: function(nfcEvent){
-      var payload = 'BEGIN:VCARD\n' +
-        'VERSION:2.1\n' +
-        'N:Coleman;Don;;;\n' +
-        'FN:Don Coleman\n' +
-        'ORG:Chariot Solutions;\n' +
-        'URL:http://chariotsolutions.com\n' +
-        'TEL;WORK:215-358-1780\n' +
-        'EMAIL;WORK:info@chariotsolutions.com\n' +
-        'END:VCARD';
-      var record = ndef.mimeMediaRecord('text/x-vCard', nfc.stringToBytes(payload));
-      nfc.write([record], function () {
-        console.log("Writing VCard", record);
-        alert("Vcard written");
-      });
+        var payload = 'BEGIN:VCARD\n' +
+            'VERSION:2.1\n' +
+            'N:Coleman;Don;;;\n' +
+            'FN:Don Coleman\n' +
+            'ORG:Chariot Solutions;\n' +
+            'URL:http://chariotsolutions.com\n' +
+            'TEL;WORK:215-358-1780\n' +
+            'EMAIL;WORK:info@chariotsolutions.com\n' +
+            'END:VCARD';
+        var record = ndef.mimeMediaRecord('text/x-vCard', nfc.stringToBytes(payload));
+        nfc.write([record], function () {
+            console.log("Writing VCard", record);
+            alert("Vcard written");
+        });
+    },
+    searchContacts: function(){
+        var options = new ContactFindOptions();
+        options.filter = $('.autocomplete').val();
+        options.multiple = true;
+        var fields = ["displayName", "name"];
+        navigator.contacts.find(fields, contactsFound, contactsError, options);
+    },
+    contactsFound: function(contact){
+        console.log(contact);
+    },
+    contactsError: function(e){
+
     }
 };
+
