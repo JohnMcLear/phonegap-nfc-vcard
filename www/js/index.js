@@ -25,6 +25,12 @@ var app = {
             console.log("Searching for ", searchTerm);
             app.searchContacts();
         });
+        $('.contact').on("click", function(e){
+            console.log("ID", e.target.id);
+            var contactObj = contact.cache[e.target.id];
+            contact.buildVCard(contactObj);
+            alert("Need to set this guys stuff to write on VCARD");
+        });
         console.log("keyup bound");
 
         this.bindEvents();
@@ -74,19 +80,39 @@ var app = {
             console.log("Writing VCard", record);
             alert("Vcard written");
         });
-    },
-    searchContacts: function(){
-        var options = new ContactFindOptions();
-        options.filter = $('.autocomplete').val();
-        options.multiple = true;
-        var fields = ["displayName", "name"];
-        navigator.contacts.find(fields, contactsFound, contactsError, options);
-    },
-    contactsFound: function(contact){
-        console.log(contact);
-    },
-    contactsError: function(e){
-
     }
 };
+
+contact = {};
+contact.cache = {}
+
+contact.error = function(e){
+     console.error(e);
+}
+contact.buildVCard = function(contact){
+    // takes in contact card from cordova and builds vcard format
+}
+
+contact.found = function(contacts){
+    console.log(contacts);
+    var i = 0;
+    $.each(contacts, function(k,person){
+        if(i < 5){
+            if(!person.displayName) return;
+            if(!person.id) return;
+            console.log(person.displayName);
+            $('.results').append("<div class='contact' id='"+person.id+"'>"+person.displayName+"</div>");
+            contact.cache[person.id] = person; 
+            i++;
+        }
+    });
+}
+
+contact.search = function(){
+    var options = new ContactFindOptions();
+    options.filter = $('.autocomplete').val();
+    options.multiple = true;
+    var fields = ["displayName", "name", "emails", "phoneNumbers"];
+    navigator.contacts.find(fields, contact.found, contact.error, options);
+}
 
