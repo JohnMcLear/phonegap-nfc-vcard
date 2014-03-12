@@ -1,4 +1,8 @@
-How to run..  Ensure cordova et al is installed
+# What do?
+Gets contact from the cordova contact API and writes vcard of that contact via NFC to a tag
+
+# How to run..
+Ensure cordova et al is installed
 ```
 git clone https://github.com/JohnMcLear/phonegap-nfc-vcard.git
 cd phonegap-nfc-vcard/

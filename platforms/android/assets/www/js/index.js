@@ -81,8 +81,8 @@ var app = {
 };
 
 contact = {};
-contact.cache = {}
-contact.vcard = "";
+contact.cache = {}; // where we store cached contacts
+contact.vcard = ""; // where we store vcard strings
 
 contact.error = function(e){
     console.error(e);
